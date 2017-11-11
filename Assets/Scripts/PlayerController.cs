@@ -8,9 +8,9 @@ public class PlayerController : MonoBehaviour {
 	public float speed = 5.0f;
 	public float sensitivity = 10.0f;
 	public float smoothing = 10.0f;
-	public float playerCamMin = -20.0f;
-	public float playerCamMax = 10.0f;
 
+	private float playerCamMin = -90.0f;
+	private float playerCamMax = 90.0f;
 	private Vector2 mouseLook;
 	private Vector2 smoothV;
 	private Rigidbody playerRB;
@@ -44,13 +44,18 @@ public class PlayerController : MonoBehaviour {
 		{
 			Cursor.lockState = CursorLockMode.None;
 		}
+
+		if(Input.GetMouseButtonDown(0))
+		{
+			ShootHook();
+		}
 	}
 
 	void Movement()
 	{
 		float xMovement = Input.GetAxis("Vertical") * speed * Time.deltaTime;
 		float zMovement = Input.GetAxis("Horizontal") * speed * Time.deltaTime;
-		transform.Translate(-xMovement, 0.0f, zMovement);
+		transform.Translate(zMovement, 0.0f, xMovement);
 	}
 
 	void Jump()
@@ -69,8 +74,26 @@ public class PlayerController : MonoBehaviour {
 		mouseLook += smoothV;
 		mouseLook.y = Mathf.Clamp(mouseLook.y, playerCamMin, playerCamMax);
 
-		playerCamera.transform.localRotation = Quaternion.Euler(-mouseLook.y, -90f, 0.0f);
+		playerCamera.transform.localRotation = Quaternion.AngleAxis(-mouseLook.y, Vector3.right);
 		transform.localRotation = Quaternion.AngleAxis(mouseLook.x, transform.up);
+	}
+
+	void ShootHook()
+	{
+		Ray ray = playerCamera.ScreenPointToRay(new Vector3(playerCamera.pixelWidth / 2, playerCamera.pixelHeight / 2, 0));
+		RaycastHit hit;
+
+		if(Physics.Raycast(ray, out hit, 100))
+		{
+			if(hit.collider.gameObject == null)
+			{
+				return;
+			}
+
+			Vector3 forceVector = hit.point - transform.position;
+
+			playerRB.AddForce(forceVector.normalized * 10, ForceMode.Impulse);			
+		}
 	}
 
 	private void OnCollisionEnter(Collision collision)
