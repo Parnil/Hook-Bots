@@ -4,19 +4,24 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
 
-	public float jumpThrust = 10.0f;
-	public float speed = 5.0f;
-	public float sensitivity = 10.0f;
-	public float smoothing = 10.0f;
+	public float jumpThrust;
+	public float speed;
+	public float sensitivity;
+	public float smoothing;
+	public float maxHookDistance;
+	public Transform gunEndPoint;
+	public float pushForce;
 
 	private float playerCamMin = -90.0f;
 	private float playerCamMax = 90.0f;
+	private WaitForSeconds hookDuration = new WaitForSeconds(0.1f);
 	private Vector2 mouseLook;
 	private Vector2 smoothV;
 	private Rigidbody playerRB;
 	private bool jumping = false;
 	private Camera mainCamera;
 	private Camera playerCamera;
+	private LineRenderer hookLine;
 
 	void Start () {
 		playerRB = GetComponent<Rigidbody>();
@@ -25,6 +30,7 @@ public class PlayerController : MonoBehaviour {
 		mainCamera.gameObject.SetActive(false);
 
 		playerCamera = GetComponentInChildren<Camera>();
+		hookLine = GetComponent<LineRenderer>();
 
 		Cursor.lockState = CursorLockMode.Locked;
 	}
@@ -49,6 +55,11 @@ public class PlayerController : MonoBehaviour {
 		{
 			ShootHook();
 		}
+
+		if(hookLine.enabled)
+		{
+			hookLine.SetPosition(0, gunEndPoint.position);
+		}
 	}
 
 	void Movement()
@@ -60,7 +71,7 @@ public class PlayerController : MonoBehaviour {
 
 	void Jump()
 	{
-		playerRB.AddForce(0, jumpThrust, 0, ForceMode.Impulse);
+		playerRB.velocity = new Vector3(0.0f, jumpThrust, 0.0f);
 	}
 
 	void PlayerCameraController()
@@ -74,8 +85,7 @@ public class PlayerController : MonoBehaviour {
 		mouseLook += smoothV;
 		mouseLook.y = Mathf.Clamp(mouseLook.y, playerCamMin, playerCamMax);
 
-		playerCamera.transform.localRotation = Quaternion.AngleAxis(-mouseLook.y, Vector3.right);
-		transform.localRotation = Quaternion.AngleAxis(mouseLook.x, transform.up);
+		transform.localRotation = Quaternion.Euler(-mouseLook.y, mouseLook.x, 0.0f);
 	}
 
 	void ShootHook()
@@ -83,17 +93,35 @@ public class PlayerController : MonoBehaviour {
 		Ray ray = playerCamera.ScreenPointToRay(new Vector3(playerCamera.pixelWidth / 2, playerCamera.pixelHeight / 2, 0));
 		RaycastHit hit;
 
-		if(Physics.Raycast(ray, out hit, 100))
+		if(Physics.Raycast(ray, out hit, maxHookDistance))
 		{
-			if(hit.collider.gameObject == null)
+			if(hit.transform.gameObject.tag == "Ground" || hit.transform.gameObject.tag == "Underside")
 			{
-				return;
+				Vector3 forceVector = hit.point - transform.position;
+				playerRB.velocity = forceVector.normalized * 20.0f;
+
+				hookLine.SetPosition(0, gunEndPoint.position);
+				hookLine.SetPosition(1, hit.point);
+				hookLine.enabled = true;
 			}
+			
+			if(hit.transform.gameObject.tag == "Player")
+			{
+				Rigidbody enemyRB = hit.transform.gameObject.GetComponent<Rigidbody>();
+				enemyRB.AddForce(playerCamera.transform.forward * pushForce, ForceMode.Impulse);
 
-			Vector3 forceVector = hit.point - transform.position;
-
-			playerRB.AddForce(forceVector.normalized * 10, ForceMode.Impulse);			
+				hookLine.SetPosition(0, gunEndPoint.position);
+				hookLine.SetPosition(1, hit.point);
+				StartCoroutine(HookEffect());
+			}
 		}
+	}
+
+	private IEnumerator HookEffect()
+	{
+		hookLine.enabled = true;
+		yield return hookDuration;
+		hookLine.enabled = false;
 	}
 
 	private void OnCollisionEnter(Collision collision)
@@ -106,6 +134,7 @@ public class PlayerController : MonoBehaviour {
 		if(collision.gameObject.tag == "Ground")
 		{
 			jumping = false;
+			hookLine.enabled = false;
 		}
 	}
 }
