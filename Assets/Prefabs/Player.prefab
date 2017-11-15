@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4734474931280488}
   - component: {fileID: 33666639115965682}
   - component: {fileID: 23187676430213206}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Visor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -393,7 +393,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 64
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!81 &81100343388188252
 AudioListener:
@@ -425,9 +425,9 @@ MonoBehaviour:
   sensitivity: 5
   smoothing: 2
   maxHookDistance: 15
-  gunEndPoint: {fileID: 4575684306492110}
-  sphereTransform: {fileID: 4637709792983352}
   pushForce: 7.5
+  gunEndPoint: {fileID: 4575684306492110}
+  healthText: {fileID: 0}
 --- !u!120 &120905054681442350
 LineRenderer:
   m_ObjectHideFlags: 1

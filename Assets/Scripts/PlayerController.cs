@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour {
 
@@ -9,11 +10,13 @@ public class PlayerController : MonoBehaviour {
 	public float sensitivity;
 	public float smoothing;
 	public float maxHookDistance;
-	public Transform gunEndPoint;
 	public float pushForce;
+	public Transform gunEndPoint;
+	public Text healthText;
 
 	private float playerCamMin = -90.0f;
 	private float playerCamMax = 90.0f;
+	private int playerHealth = 0;
 	private WaitForSeconds hookDuration = new WaitForSeconds(0.1f);
 	private Vector2 mouseLook;
 	private Vector2 smoothV;
@@ -33,6 +36,8 @@ public class PlayerController : MonoBehaviour {
 		hookLine = GetComponent<LineRenderer>();
 
 		Cursor.lockState = CursorLockMode.Locked;
+
+		UpdateHealth();
 	}
 	
 	void Update () {
@@ -59,6 +64,12 @@ public class PlayerController : MonoBehaviour {
 		if(hookLine.enabled)
 		{
 			hookLine.SetPosition(0, gunEndPoint.position);
+		}
+
+		//Health display test
+		if(Input.GetMouseButtonDown(1))
+		{
+			DamagePlayer(10);
 		}
 	}
 
@@ -122,6 +133,22 @@ public class PlayerController : MonoBehaviour {
 		hookLine.enabled = true;
 		yield return hookDuration;
 		hookLine.enabled = false;
+	}
+
+	private void DamagePlayer(int damage)
+	{
+		playerHealth += damage;
+		UpdateHealth();
+
+		if(playerHealth <= 0)
+		{
+			Debug.Log("Player Died");
+		}
+	}
+
+	private void UpdateHealth()
+	{
+		healthText.text = playerHealth.ToString();
 	}
 
 	private void OnCollisionEnter(Collision collision)
